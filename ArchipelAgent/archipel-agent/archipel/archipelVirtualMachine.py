@@ -236,6 +236,10 @@ class TNArchipelVirtualMachine (TNArchipelEntity, archipelLibvirtEntity.TNArchip
                                 "parameters": [],
                                 "method": self.message_insult,
                                 "description": "" },
+                            {  "commands" : ["init", "hack"],
+                                "parameters": [],
+                                "method": self.message_init,
+                                "description": "Inits a non-archipel VM." },
                             {  "commands" : ["hello", "hey", "hi", "good morning", "yo"],
                                 "ignore": True,
                                 "parameters": [],
@@ -1060,6 +1064,24 @@ class TNArchipelVirtualMachine (TNArchipelEntity, archipelLibvirtEntity.TNArchip
             self.unlock()
             reply = build_error_iq(self, ex, iq, ARCHIPEL_ERROR_CODE_VM_SHUTDOWN)
         return reply
+
+    def message_init(self, msg):
+        """
+        Handle message init order. Quick fix for for forcing <description>
+        tag
+        @type msg: xmpp.Protocol.Message
+        @param msg: the received message
+        @rtype: xmpp.Protocol.Message
+        @return: a ready to send Message containing the result of the action
+        """
+        try:
+            mynewxml = self.set_automatic_libvirt_description(self.xmldesc())
+            self.libvirt_connection.defineXML(mynewxml)
+            self.log.debug("(re-)generated a <description> tag upon request")
+            self.log.debug(self.xmldesc())
+            return "All went fine forcing <description> tag - VM integrated"
+        except Exception as ex:
+            return build_error_message(self, ex, msg)
 
     def message_shutdown(self, msg):
         """
